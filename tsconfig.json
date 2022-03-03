@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": true,
+    "declaration": true,
+    "lib": [
+      "ESNext"
+    ],
+    "target": "ES6",
+    "allowJs": false,
+    "strict": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+  }
+}

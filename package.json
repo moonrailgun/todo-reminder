@@ -1,0 +1,23 @@
+{
+  "name": "todo-reminder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moonrailgun/todo-reminder.git"
+  },
+  "keywords": [
+    "todo",
+    "reminder"
+  ],
+  "author": "moonrailgun",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/moonrailgun/todo-reminder/issues"
+  },
+  "homepage": "https://github.com/moonrailgun/todo-reminder#readme"
+}
