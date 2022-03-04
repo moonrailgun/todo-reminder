@@ -1,7 +1,9 @@
-import { checkSourceCode } from 'todo-reminder-core';
+import { checkSourceCodeTodo } from 'todo-reminder-core';
 
 function start() {
-  checkSourceCode('./demo/**').then((todoBlame) => console.log({ todoBlame }));
+  checkSourceCodeTodo('./demo/**').then((todoBlame) =>
+    console.log({ todoBlame })
+  );
 }
 
 start();

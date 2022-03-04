@@ -23,9 +23,17 @@ export interface TodoBlameInfo {
   previous: string;
   filename: string;
   sourceCode: string;
+  line: number;
 }
 
-export async function checkSourceCode(
+/**
+ * Check source code todo and return blame for those lines.
+ *
+ * @param pattern for example: "./src/**"
+ * @param options
+ * @returns
+ */
+export async function checkSourceCodeTodo(
   pattern: string,
   options?: CheckSourceCodeOptions
 ): Promise<TodoBlameInfo[]> {
@@ -68,7 +76,14 @@ export async function checkSourceCode(
     todos
       .filter((todo) => todo.lines.length > 0)
       .map((todo) =>
-        Promise.all(todo.lines.map((line) => blameLine(`${todo.path}:${line}`)))
+        Promise.all(
+          todo.lines.map((line) =>
+            blameLine(`${todo.path}:${line}`).then((blameInfo) => ({
+              ...blameInfo,
+              line,
+            }))
+          )
+        )
       )
   );
 
