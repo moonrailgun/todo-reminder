@@ -61,8 +61,11 @@ export interface SendReminderMessageOptions extends CheckSourceCodeOptions {
 export class FeishuReminder {
   constructor(public appId: string, public appSecret: string) {}
 
-  async sendReminderMessage(options: SendReminderMessageOptions) {
-    const todos = await checkSourceCodeTodo('../test/demo/**');
+  async sendReminderMessage(
+    pattern: string,
+    options: SendReminderMessageOptions
+  ): Promise<Record<string, TodoBlameInfo[]>> {
+    const todos = await checkSourceCodeTodo(pattern);
 
     const todoGroup: Record<string, TodoBlameInfo[]> = {};
 
@@ -96,6 +99,8 @@ export class FeishuReminder {
     });
 
     await Promise.all(promiseList);
+
+    return todoGroup;
   }
 
   private async getTenantToken() {
