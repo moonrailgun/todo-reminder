@@ -8,6 +8,11 @@ export interface CheckSourceCodeOptions {
    * @default 'TODO'
    */
   todoMark?: string;
+
+  /**
+   * @default process.cwd()
+   */
+  cwd?: string;
 }
 
 export interface TodoBlameInfo {
@@ -37,10 +42,11 @@ export async function checkSourceCodeTodo(
   pattern: string,
   options?: CheckSourceCodeOptions
 ): Promise<TodoBlameInfo[]> {
-  const { todoMark = 'TODO' } = options ?? {};
+  const { todoMark = 'TODO', cwd } = options ?? {};
 
   const fileList = await globby(pattern, {
     onlyFiles: true,
+    cwd,
   });
   const todos = await Promise.all(
     fileList.map(

@@ -1,4 +1,8 @@
-import { checkSourceCodeTodo, TodoBlameInfo } from 'todo-reminder-core';
+import {
+  CheckSourceCodeOptions,
+  checkSourceCodeTodo,
+  TodoBlameInfo,
+} from 'todo-reminder-core';
 import ms from 'ms';
 import axios from 'axios';
 
@@ -23,7 +27,7 @@ function defaultReminderMessageRender(todos: TodoBlameInfo[]) {
   return `You have those TODO not been resolve:\n\n${todolistText}`;
 }
 
-export interface SendReminderMessageOptions {
+export interface SendReminderMessageOptions extends CheckSourceCodeOptions {
   /**
    * key: email
    * value: lark user id

@@ -1,8 +1,8 @@
 {
   "name": "todo-reminder-feishu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "start": "ts-node index.ts",
     "build": "tsc",
@@ -13,7 +13,7 @@
   "dependencies": {
     "axios": "^0.26.0",
     "ms": "^2.1.3",
-    "todo-reminder-core": "*"
+    "todo-reminder-core": "^1.0.0"
   },
   "devDependencies": {
     "@types/ms": "^0.7.31",
