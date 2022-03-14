@@ -61,7 +61,10 @@ export interface SendReminderMessageOptions extends CheckSourceCodeOptions {
 export class FeishuReminder {
   constructor(public appId: string, public appSecret: string) {}
 
-  async sendReminderMessage(
+  /**
+   * Send Reminder Message to person
+   */
+  public async sendReminderMessage(
     pattern: string,
     options: SendReminderMessageOptions
   ): Promise<Record<string, TodoBlameInfo[]>> {
