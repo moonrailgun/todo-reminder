@@ -1,11 +1,12 @@
 {
   "name": "todo-reminder-feishu",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
     "start": "ts-node index.ts",
     "build": "tsc",
+    "watch": "tsc --watch",
     "prepare": "npm run build"
   },
   "author": "moonrailgun",

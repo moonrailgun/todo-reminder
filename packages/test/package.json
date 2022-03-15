@@ -5,12 +5,14 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "bitable": "ts-node bitable.ts",
     "test": "ts-node index.ts"
   },
   "author": "moonrailgun",
   "license": "MIT",
   "dependencies": {
-    "todo-reminder-core": "*"
+    "todo-reminder-core": "*",
+    "todo-reminder-feishu": "*"
   },
   "devDependencies": {
     "ts-node": "^10.6.0"

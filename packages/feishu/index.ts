@@ -16,6 +16,14 @@ interface SendMsgPayload {
   content: string;
 }
 
+interface BitableItems {
+  id: string;
+  record_id: string;
+  fields: {
+    [key: string]: unknown;
+  };
+}
+
 function defaultReminderMessageRender(todos: TodoBlameInfo[]) {
   const todolistText = todos
     .map(
@@ -56,6 +64,64 @@ export interface SendReminderMessageOptions extends CheckSourceCodeOptions {
    * @link https://github.com/vercel/ms
    */
   gracePeriodMs?: number | string;
+}
+
+export interface SendReminderRecordIntoBitableOptions
+  extends CheckSourceCodeOptions {
+  /**
+   * @link https://open.feishu.cn/document/ukTMukTMukTM/uczNzUjL3czM14yN3MTN
+   * @example bascnCMII2ORej2RItqpZZUNMIe
+   */
+  appToken: string;
+
+  /**
+   * @link https://open.feishu.cn/document/ukTMukTMukTM/uczNzUjL3czM14yN3MTN
+   * @example tblxI2tWaxP5dG7p
+   */
+  tableId: string;
+
+  /**
+   * Custom Table Fields
+   * @default
+   * {
+   * [pathFieldName]: `${todo.filename}:${todo.line}`,
+   * [authorFieldName]: `${todo.author} <${todo.authorMail}>`,
+   * [createdFieldName]: new Date(todo.authorTime).valueOf(),
+   * [gitSummaryFieldName]: todo.summary,
+   * [sourceCodeFieldName]: todo.sourceCode,
+   * }
+   */
+  customTableFields?: (todo: TodoBlameInfo) => Record<string, any>;
+
+  /**
+   * Field which todo file path
+   * @default 'Filepath'
+   */
+  pathFieldName?: string;
+
+  /**
+   * Field which todo author
+   * @default 'Author'
+   */
+  authorFieldName?: string;
+
+  /**
+   * Field which todo assignee
+   * @default 'Created'
+   */
+  createdFieldName?: string;
+
+  /**
+   * Field which todo git summary
+   * @default 'Summary'
+   */
+  gitSummaryFieldName?: string;
+
+  /**
+   * Field which todo source code
+   * @default 'SourceCode'
+   */
+  sourceCodeFieldName?: string;
 }
 
 export class FeishuReminder {
@@ -106,6 +172,69 @@ export class FeishuReminder {
     return todoGroup;
   }
 
+  /**
+   * Send Reminder to Feishu Bitable
+   *
+   * Make sure your table have editable permission
+   */
+  public async sendReminderRecordIntoBitable(
+    pattern: string,
+    options: SendReminderRecordIntoBitableOptions
+  ) {
+    const {
+      customTableFields,
+      pathFieldName = 'Filepath',
+      authorFieldName = 'Author',
+      createdFieldName = 'Created',
+      gitSummaryFieldName = 'Summary',
+      sourceCodeFieldName = 'SourceCode',
+    } = options;
+    const todos = await checkSourceCodeTodo(pattern);
+
+    console.log('todo', todos);
+
+    const existedRecords = await this.fetchBitableRecords(
+      options.appToken,
+      options.tableId,
+      {
+        field_names: JSON.stringify([pathFieldName]),
+      }
+    );
+    const existedFilepath = existedRecords.map(
+      (r) => r.fields[pathFieldName] as string
+    );
+    const uninsertTodos = todos.filter(
+      (todo) => !existedFilepath.includes(`${todo.filename}:${todo.line}`)
+    );
+
+    if (uninsertTodos.length === 0) {
+      console.log('No more new TODOs');
+      return;
+    }
+
+    const newRecords = uninsertTodos.map((todo) => ({
+      fields: customTableFields
+        ? customTableFields(todo) // Allow to Custom
+        : {
+            [pathFieldName]: `${todo.filename}:${todo.line}`,
+            [authorFieldName]: `${todo.author} <${todo.authorMail}>`,
+            [createdFieldName]: new Date(todo.authorTime).valueOf(),
+            [gitSummaryFieldName]: todo.summary,
+            [sourceCodeFieldName]: todo.sourceCode,
+          },
+    }));
+
+    await this.batchInsertBitableRecords(
+      options.appToken,
+      options.tableId,
+      newRecords
+    );
+
+    console.log(
+      `Insert ${newRecords.length} records into bitable: https://bytedance.feishu.cn/base/${options.appToken}?table=${options.tableId}.`
+    );
+  }
+
   private async getTenantToken() {
     const res = await axios.post(
       'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal/',
@@ -119,7 +248,77 @@ export class FeishuReminder {
   }
 
   /**
-   * https://open.feishu.cn/document/ukTMukTMukTM/uUjNz4SN2MjL1YzM
+   * @link https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/bitable-v1/app-table-record/list
+   */
+  private async fetchBitableRecords(
+    appToken: string,
+    tableId: string,
+    options: {
+      field_names: string;
+    }
+  ): Promise<BitableItems[]> {
+    const tenantToken = await this.getTenantToken();
+
+    async function query(pageToken?: string): Promise<{
+      has_more: boolean;
+      page_token: string;
+      total: number;
+      items: BitableItems[];
+    }> {
+      const res = await axios({
+        method: 'get',
+        url: `https://open.feishu.cn/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/records`,
+        headers: {
+          Authorization: `Bearer ${tenantToken}`,
+        },
+        params: { ...options, page_size: 2, page_token: pageToken },
+      });
+
+      return res.data?.data;
+    }
+
+    const items: BitableItems[] = [];
+    async function loop(pageToken?: string) {
+      const res = await query(pageToken);
+      items.push(...res.items);
+
+      if (res.has_more) {
+        await loop(res.page_token);
+      }
+    }
+    await loop();
+
+    return items;
+  }
+
+  /**
+   * @link https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/bitable-v1/app-table-record/batch_create
+   */
+  private async batchInsertBitableRecords(
+    appToken: string,
+    tableId: string,
+    records: {
+      fields: { [key: string]: any };
+    }[]
+  ) {
+    const tenantToken = await this.getTenantToken();
+
+    const res = await axios({
+      method: 'post',
+      url: `https://open.feishu.cn/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/records/batch_create?user_id_type=open_id`,
+      headers: {
+        Authorization: `Bearer ${tenantToken}`,
+      },
+      data: {
+        records,
+      },
+    });
+
+    return res.data;
+  }
+
+  /**
+   * @link https://open.feishu.cn/document/ukTMukTMukTM/uUjNz4SN2MjL1YzM
    */
   private async sendLarkMsg(payload: SendMsgPayload) {
     let tenantToken = payload.tenantToken;
