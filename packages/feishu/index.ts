@@ -229,10 +229,10 @@ export class FeishuReminder {
       newRecords
     );
 
+    console.debug('Result List:', res);
     console.log(
       `Insert ${newRecords.length} records into bitable: https://bytedance.feishu.cn/base/${options.appToken}?table=${options.tableId}.`
     );
-    console.log('Result List:', res);
   }
 
   private async getTenantToken() {
