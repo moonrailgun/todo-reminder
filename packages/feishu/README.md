@@ -2,7 +2,7 @@
 
 ## Usage
 
-```js
+```ts
 new FeishuReminder(
   process.env.LARK_APP_ID,
   process.env.LARK_APP_SECRET
@@ -23,6 +23,21 @@ new FeishuReminder(
   gracePeriodMs: '1h',
 });
 ```
+
+### sendReminderRecordIntoBitable
+
+```ts
+new FeishuReminder(String(process.env.LARK_APP_ID), String(process.env.LARK_APP_SECRET))
+  .sendReminderRecordIntoBitable('./src/**', {
+    appToken: 'xxxxxxxxxxxxxxxxxxx',
+    tableId: 'xxxxxxxxxxxxxxxxx'
+  })
+  .catch((err) => console.error(err));
+```
+
+**NOTICE:**
+- Make sure bitable should have those Those column: `pathFieldName`, `authorFieldName`, `createdFieldName`(type: Date), `gitSummaryFieldName`, `sourceCodeFieldName` or you can build your own record by props: `customTableFields`
+- Make sure bitable should open editable permission for everyone.
 
 ## How to get userId?
 

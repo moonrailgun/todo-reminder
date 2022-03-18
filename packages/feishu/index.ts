@@ -5,6 +5,7 @@ import {
 } from 'todo-reminder-core';
 import ms from 'ms';
 import axios from 'axios';
+import { chunk } from 'lodash-es';
 
 interface SendMsgPayload {
   tenantToken?: string;
@@ -191,8 +192,6 @@ export class FeishuReminder {
     } = options;
     const todos = await checkSourceCodeTodo(pattern);
 
-    console.log('todo', todos);
-
     const existedRecords = await this.fetchBitableRecords(
       options.appToken,
       options.tableId,
@@ -224,7 +223,7 @@ export class FeishuReminder {
           },
     }));
 
-    await this.batchInsertBitableRecords(
+    const res = await this.batchInsertBitableRecords(
       options.appToken,
       options.tableId,
       newRecords
@@ -233,6 +232,7 @@ export class FeishuReminder {
     console.log(
       `Insert ${newRecords.length} records into bitable: https://bytedance.feishu.cn/base/${options.appToken}?table=${options.tableId}.`
     );
+    console.log('Result List:', res);
   }
 
   private async getTenantToken() {
@@ -280,7 +280,7 @@ export class FeishuReminder {
     const items: BitableItems[] = [];
     async function loop(pageToken?: string) {
       const res = await query(pageToken);
-      items.push(...res.items);
+      items.push(...(res.items ?? []));
 
       if (res.has_more) {
         await loop(res.page_token);
@@ -303,18 +303,25 @@ export class FeishuReminder {
   ) {
     const tenantToken = await this.getTenantToken();
 
-    const res = await axios({
-      method: 'post',
-      url: `https://open.feishu.cn/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/records/batch_create?user_id_type=open_id`,
-      headers: {
-        Authorization: `Bearer ${tenantToken}`,
-      },
-      data: {
-        records,
-      },
-    });
+    // Because of bitable's limits
+    // will split by 100 record
+    const resList = [];
+    for (const c of chunk(records, 100)) {
+      const _r = await axios({
+        method: 'post',
+        url: `https://open.feishu.cn/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/records/batch_create?user_id_type=open_id`,
+        headers: {
+          Authorization: `Bearer ${tenantToken}`,
+        },
+        data: {
+          records: c,
+        },
+      });
 
-    return res.data;
+      resList.push(_r);
+    }
+
+    return resList;
   }
 
   /**
