@@ -5,7 +5,7 @@ import {
 } from 'todo-reminder-core';
 import ms from 'ms';
 import axios from 'axios';
-import { chunk } from 'lodash-es';
+import chunk from 'lodash/chunk';
 
 interface SendMsgPayload {
   tenantToken?: string;
