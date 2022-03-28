@@ -86,6 +86,7 @@ export async function checkSourceCodeTodo(
           todo.lines.map((line) =>
             blameLine(`${todo.path}:${line}`).then((blameInfo) => ({
               ...blameInfo,
+              path: todo.path,
               line,
             }))
           )
